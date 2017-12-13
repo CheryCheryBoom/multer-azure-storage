@@ -57,6 +57,10 @@ class MulterAzureStorage {
         if (this.containerError) {
             cb(new Error('Cannot use container. Check if provided options are correct.'))
         }
+        
+        if (!file.mimetype) {
+            cb(new Error('No mimetype provided.'))
+        }
 
         if (!this.containerCreated) {
             _requestsQueue.push({ req: req, file: file, cb: cb })
@@ -64,7 +68,11 @@ class MulterAzureStorage {
         }
 
         const blob = (typeof this.fileName !== 'function')? blobName(file): this.fileName(file)
-        file.stream.pipe(this.blobService.createWriteStreamToBlockBlob(this.containerName, blob, (err, azureBlob) => {
+        file.stream.pipe(this.blobService.createWriteStreamToBlockBlob(this.containerName, blob, {
+          contentSettings: {
+            contentType: file.mimetype
+          }
+        }, (err, azureBlob) => {
             if (err) {
                 return cb(err)
             }
